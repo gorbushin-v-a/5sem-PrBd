@@ -1,0 +1,642 @@
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-latest.js"></script>
+	<meta charset="UTF-8">
+	<title>База данных</title>
+	<style type="text/css">
+		body{
+			background: #B0C4DE;
+			color: #FFFFFF;
+		}
+		TD {
+			vertical-align: top;
+			}
+		#col1 {
+			width: 50%;
+			background: #008B8B;
+			color: #000000;
+		}
+		#col2 {
+			width: 50%;
+			background: #20B2AA;
+			color: #000000;
+		}
+		#col3 {
+			width: 50%;
+			background: #66CDAA;
+			color: #000000;
+		}
+		#colbutton {
+			width: 1%;
+			background: #66CDAA;
+			color: #000000;
+		}
+		#colcap {
+			background: #87CEEB;
+			color: #000000;
+		}
+		#colnone {
+			display:none;
+			background: #87CEEB;
+			color: #000000;
+		}
+		.box {
+			outline: 2px solid #000;
+			background: #AFEEEE;
+			color: #000000;
+		}
+	</style>
+</head>
+<body>
+	<script>
+		$(document).ready(function(){
+		$("h2 span").click(function(){
+		$(this).parent().next().slideToggle();
+		});
+		}); 
+	</script>
+	
+	<h1>База данных</h1>
+	
+	<h2><span>Пример вывода статистической информации</span></h2>
+	<div class="box">
+		<h4>Пример 1</h4>
+		SELECT id_материала FROM материал WHERE наименование_материала = 'Медная руда';
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colcap"><pre>id_материала</pre></td>
+			</tr>
+			{% for exRow in exTable %}
+			<tr>
+				<td id="col1"><pre>{{ exRow[0] }}</pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+		
+		<h4>Пример 2</h4>
+		SELECT p.цена, p.id_организации_продавца, ps.наименование_материала FROM цена_материала p
+		<br>INNER JOIN материал ps ON p.id_материала = ps.id_материала;
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colcap"><pre>Цена</pre></td>
+				<td id="colcap"><pre>id_организации_продавца</pre></td>
+				<td id="colcap"><pre>наименование_материала</pre></td>
+			</tr>
+			{% for exaRow in exaTable %}
+			<tr>
+				<td id="col2"><pre>{{ exaRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ exaRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ exaRow[2] }}</pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+		
+		<h4>Пример 3</h4>
+		SELECT p.наименование_материала, ps.количество FROM материал p 
+		<br>INNER JOIN рецептура ps ON p.id_материала = ps.id_материала
+		<br>WHERE (SELECT id_производства FROM производство WHERE название_производства = 'Сплавление бронзы')= ps.`id_производства`;
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colcap"><pre>наименование_материала</pre></td>
+				<td id="colcap"><pre>количество</pre></td>
+			</tr>
+			{% for examRow in examTable %}
+			<tr>
+				<td id="col2"><pre>{{ examRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ examRow[1] }}</pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+		
+		<h4>Пример 4</h4>
+		SELECT p1.наименование_материала 'материал', SUM(p2.количество*p5.количество)-p1.количество 'необходимо дозаказать', p1.количество 'имеется'
+		<br>FROM материал p1 
+		<br>JOIN рецептура p2 ON p1.id_материала = p2.id_материала
+		<br>JOIN производство p3 ON p2.id_производства = p3.id_производства
+		<br>JOIN конечный_продукт p4 ON p3.id_продукта = p4.id_продукта
+		<br>JOIN заказ_конечный_продукт p5 ON p4.id_продукта = p5.id_продукта
+		<br>GROUP BY p1.наименование_материала, p1.количество
+		<br>HAVING (SUM(p2.количество*p5.количество)>p1.количество)
+		<br>ORDER BY 2 DESC, 1, 3
+		<br>LIMIT 3;
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colcap"><pre>Материал</pre></td>
+				<td id="colcap"><pre>необходимо дозаказать</pre></td>
+				<td id="colcap"><pre>имеется</pre></td>
+			</tr>
+			{% for exampRow in exampTable %}
+			<tr>
+				<td id="col2"><pre>{{ exampRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ exampRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ exampRow[2] }}</pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+		
+	</div>
+	
+	<h2><span>Таблица организаций-заказчиков</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addCustomer">
+			<input type="text" name="fullname">
+			<input type="text" name="info">
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<h2>Найти записи в таблице</h2>
+		<form method="post" action="/findCustomer">
+			<input type="text" name="fullname">
+			<input type="text" name="info">
+			<button type="submit">Найти</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Наименование организации заказчика</pre></td>
+				<td id="colcap"><pre>Контактные данные</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for customersRow in customersTable %}
+			<tr>
+				<td id="colnone"><pre>{{ customersRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ customersRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ customersRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteCustomer" method="post"><input type="hidden" name="personCustomer" value="{{ customersRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица организаций-продавцов</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addSeller">
+			<input type="text" name="fullname">
+			<input type="text" name="info">
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<h2>Найти записи в таблице</h2>
+		<form method="post" action="/findSeller">
+			<input type="text" name="fullname">
+			<input type="text" name="info">
+			<button type="submit">Найти</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Наименование организации продавца</pre></td>
+				<td id="colcap"><pre>Контактные данные</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for sellersRow in sellersTable %}
+			<tr>
+				<td id="colnone"><pre>{{ sellersRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ sellersRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ sellersRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteSeller" method="post"><input type="hidden" name="personSeller" value="{{ sellersRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица материалов</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addMaterial">
+			<input type="text" name="name">
+			<input type="text" name="count">
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<h2>Найти записи в таблице</h2>
+		<form method="post" action="/findMaterial">
+			<input type="text" name="fullname">
+			<input type="text" name="info">
+			<button type="submit">Найти</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Наименование материала</pre></td>
+				<td id="colcap"><pre>Количество</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for materialsRow in materialsTable %}
+			<tr>
+				<td id="colnone"><pre>{{ materialsRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ materialsRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ materialsRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteMaterial" method="post"><input type="hidden" name="material" value="{{ materialsRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица заказов</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addOrder">
+			<input type="text" name="name">
+			<select name="nameCustomer" >
+				{% for customersListRow in customersListTable %}
+				<option value = "{{ customersListRow.id_организации_заказчика }}">{{ customersListRow.наименование_организации_заказчика }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название заказа</pre></td>
+				<td id="colcap"><pre>Наименование организации заказчика</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for ordersRow in ordersTable %}
+			<tr>
+				<td id="colnone"><pre>{{ ordersRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ ordersRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ ordersRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteOrder" method="post"><input type="hidden" name="order" value="{{ ordersRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	
+	
+	<h2><span>Таблица заказ - конечный продукт</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addOrderToProduct">
+			<select name="order" >
+				{% for ordersListRow in ordersListTable %}
+				<option value = "{{ ordersListRow.номер_заказа }}">{{ ordersListRow.описание_заказа }}</option>
+				{% endfor %}
+			</select>
+			<input type="text" name="countP">
+			<select name="product" >
+				{% for productListRow in productListTable %}
+				<option value = "{{ productListRow.id_продукта }}">{{ productListRow.наименование_продукта }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Описание заказа</pre></td>
+				<td id="colcap"><pre>Количество</pre></td>
+				<td id="colcap"><pre>Наименование продукта</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for orderToProductRow in orderToProductTable %}
+			<tr>
+				<td id="colnone"><pre>{{ orderToProductRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ orderToProductRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ orderToProductRow[2] }}</pre></td>
+				<td id="colnone"><pre>{{ orderToProductRow[3] }}</pre></td>
+				<td id="col1"><pre>{{ orderToProductRow[4] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteOrderToProduct" method="post"><input type="hidden" name="value1" value="{{ orderToProductRow[0] }}"><input type="hidden" name="value2" value="{{ orderToProductRow[3] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица заказ - материал</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addOrderToMaterial">
+			<select name="order" >
+				{% for ordersListRow in ordersListTable %}
+				<option value = "{{ ordersListRow.номер_заказа }}">{{ ordersListRow.описание_заказа }}</option>
+				{% endfor %}
+			</select>
+			<input type="text" name="countP">
+			<select name="product" >
+				{% for materialListRow in materialListTable %}
+				<option value = "{{ materialListRow.id_материала }}">{{ materialListRow.наименование_материала }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Описание заказа</pre></td>
+				<td id="colcap"><pre>Количество</pre></td>
+				<td id="colcap"><pre>Наименование материала</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for orderToMaterialRow in orderToMaterialTable %}
+			<tr>
+				<td id="colnone"><pre>{{ orderToMaterialRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ orderToMaterialRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ orderToMaterialRow[2] }}</pre></td>
+				<td id="colnone"><pre>{{ orderToMaterialRow[3] }}</pre></td>
+				<td id="col1"><pre>{{ orderToMaterialRow[4] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteOrderToMaterial" method="post"><input type="hidden" name="value1" value="{{ orderToMaterialRow[0] }}"><input type="hidden" name="value2" value="{{ orderToMaterialRow[3] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица конечных продуктов</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addProduct">
+			<input type="text" name="product">
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название продукта</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for productRow in productTable %}
+			<tr>
+				<td id="colnone"><pre>{{ productRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ productRow[1] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteProduct" method="post"><input type="hidden" name="order" value="{{ productRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица оборудования</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addEq">
+			<input type="text" name="name">
+			<select name="type" >
+				{% for customersListRow in typeListTable %}
+				<option value = "{{ customersListRow.id_типа }}">{{ customersListRow.наименование_типа }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название оборудования</pre></td>
+				<td id="colcap"><pre>Тип оборудования</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for equipmentRow in equipmentTable %}
+			<tr>
+				<td id="colnone"><pre>{{ equipmentRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ equipmentRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ equipmentRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteEq" method="post"><input type="hidden" name="order" value="{{ equipmentRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица производств</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addMf">
+			<input type="text" name="name">
+			<select name="type" >
+				{% for customersListRow in productListTable %}
+				<option value = "{{ customersListRow.id_продукта }}">{{ customersListRow.наименование_продукта }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название производства</pre></td>
+				<td id="colcap"><pre>Производимый продукт</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for manufactureRow in manufactureTable %}
+			<tr>
+				<td id="colnone"><pre>{{ manufactureRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ manufactureRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ manufactureRow[2] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteMf" method="post"><input type="hidden" name="order" value="{{ manufactureRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица производство - оборудование</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addManufactureToEquipment">
+			<select name="order" >
+				{% for ordersListRow in manufactureListTable %}
+				<option value = "{{ ordersListRow.id_производства }}">{{ ordersListRow.название_производства }}</option>
+				{% endfor %}
+			</select>
+			<input type="text" name="countP">
+			<select name="product" >
+				{% for materialListRow in equipmentListTable %}
+				<option value = "{{ materialListRow.id_оборудования }}">{{ materialListRow.название }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название производства</pre></td>
+				<td id="colcap"><pre>Количество</pre></td>
+				<td id="colcap"><pre>Наименование оборудования</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for manufactureToEquipmentRow in manufactureToEquipmentTable %}
+			<tr>
+				<td id="colnone"><pre>{{ manufactureToEquipmentRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ manufactureToEquipmentRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ manufactureToEquipmentRow[2] }}</pre></td>
+				<td id="colnone"><pre>{{ manufactureToEquipmentRow[3] }}</pre></td>
+				<td id="col1"><pre>{{ manufactureToEquipmentRow[4] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteManufactureToEquipment" method="post"><input type="hidden" name="value1" value="{{ manufactureToEquipmentRow[0] }}"><input type="hidden" name="value2" value="{{ manufactureToEquipmentRow[3] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица рецептур</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addRecipe">
+		<select name="product" >
+				{% for materialListRow in materialListTable %}
+				<option value = "{{ materialListRow.id_материала }}">{{ materialListRow.наименование_материала }}</option>
+				{% endfor %}
+			</select>
+			<input type="text" name="countP">
+			<select name="order" >
+				{% for ordersListRow in manufactureListTable %}
+				<option value = "{{ ordersListRow.id_производства }}">{{ ordersListRow.название_производства }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название материала</pre></td>
+				<td id="colcap"><pre>Количество</pre></td>
+				<td id="colcap"><pre>Название производства</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for recipeRow in recipeTable %}
+			<tr>
+				<td id="colnone"><pre>{{ recipeRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ recipeRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ recipeRow[2] }}</pre></td>
+				<td id="colnone"><pre>{{ recipeRow[3] }}</pre></td>
+				<td id="col1"><pre>{{ recipeRow[4] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteRecipe" method="post"><input type="hidden" name="value1" value="{{ recipeRow[0] }}"><input type="hidden" name="value2" value="{{ recipeRow[3] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица типов оборудования</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addType">
+			<input type="text" name="type">
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название типа</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for equipmentTypeRow in equipmentTypeTable %}
+			<tr>
+				<td id="colnone"><pre>{{ equipmentTypeRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ equipmentTypeRow[1] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteType" method="post"><input type="hidden" name="order" value="{{ equipmentTypeRow[0] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+	<h2><span>Таблица цен материалов</span></h2>
+	<div class="box">
+		<h2>Добавить запись в таблицу</h2>
+		<form method="post" action="/addCost">
+		<select name="product" >
+				{% for materialListRow in materialListTable %}
+				<option value = "{{ materialListRow.id_материала }}">{{ materialListRow.наименование_материала }}</option>
+				{% endfor %}
+			</select>
+			<input type="text" name="countP">
+			<select name="order" >
+				{% for ordersListRow in sellersListTable %}
+				<option value = "{{ ordersListRow.id_организации_продавца }}">{{ ordersListRow.наименование_организации_продавца }}</option>
+				{% endfor %}
+			</select>
+			<button type="submit">Добавить</button>
+		</form>
+		<form method="post" action="/roll">
+			<button type="submit">Отменить</button>
+		</form>
+		<form method="post" action="/commit">
+			<button type="submit">Сохранить</button>
+		</form>
+		<table width="100%" cellpadding="5" cellspacing="0">
+			<tr>
+				<td id="colnone"><pre>id</pre></td>
+				<td id="colcap"><pre>Название материала</pre></td>
+				<td id="colcap"><pre>Цена</pre></td>
+				<td id="colcap"><pre>Наименование организации продавца</pre></td>
+				<td id="colcap"><pre></pre></td>
+			</tr>
+			{% for materialCostRow in materialCostTable %}
+			<tr>
+				<td id="colnone"><pre>{{ materialCostRow[0] }}</pre></td>
+				<td id="col1"><pre>{{ materialCostRow[1] }}</pre></td>
+				<td id="col2"><pre>{{ materialCostRow[2] }}</pre></td>
+				<td id="colnone"><pre>{{ materialCostRow[3] }}</pre></td>
+				<td id="col1"><pre>{{ materialCostRow[4] }}</pre></td>
+				<td id="colbutton"><pre><form action="/deleteCost" method="post"><input type="hidden" name="value1" value="{{ materialCostRow[0] }}"><input type="hidden" name="value2" value="{{ materialCostRow[3] }}"><input type="submit" value="Удалить" /></form></pre></td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	
+</body>
+</html>
